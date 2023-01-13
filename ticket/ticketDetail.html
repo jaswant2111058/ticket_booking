@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,
+                        initial-scale=1.0" />
+  <title>QR Code Generator</title>
+
+  <style>
+    h1,
+    h3 {
+      color: green;
+    }
+
+    body,
+    header {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
+  </script>
+</head>
+
+<body>
+  <div class="user-input-section">
+    <section class="heading">
+      <div class="title">QRcodes</div>
+      <div class="sub-title">Generate QRCode for anything!</div>
+    </section>
+    <section class="user-input">
+      <input type="text" placeholder="Type something..." name="input_text" id="input_text" autocomplete="off">
+      <button class="button" type="submit">Generate<i class="fa-solid fa-rotate"></i></button>
+    </section>
+  </div>
+  <div class="qr-code-container">
+    <div class="qr-code" style></div>
+  </div>
+
+  <script>
+    let btn = document.querySelector(".button");
+    let qr_code_element = document.querySelector(".qr-code");
+
+    btn.addEventListener("click", () => {
+      let user_input = document.querySelector("#input_text");
+      if (user_input.value != "") {
+        if (qr_code_element.childElementCount == 0) {
+          generate(user_input);
+        } else {
+          qr_code_element.innerHTML = "";
+          generate(user_input);
+        }
+      } else {
+        console.log("not valid input");
+        qr_code_element.style = "display: none";
+      }
+    });
+
+const detail = {
+  ticketid:"hgjhjkjhjkhjkbhjknjijkhjk",
+  email:"jassi@gmail.com",
+  seat:"hgdkjsdfljkljkkn"
+}
+
+    function generate(user_input) {
+      qr_code_element.style = "";
+
+      var qrcode = new QRCode(qr_code_element, {
+        text: `{'ticketid':"hgjhjkjhjkhjkbhjknjijkhjk",
+  'email':"jassi@gmail.com",
+  'seat':"hgdkjsdfljkljkkn"}`,
+        width: 300, //128
+        height: 300,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      let download = document.createElement("button");
+      qr_code_element.appendChild(download);
+
+      let download_link = document.createElement("a");
+      download_link.setAttribute("download", "qr_code.png");
+      download_link.innerHTML = `Download <i class="fa-solid fa-download"></i>`;
+
+      download.appendChild(download_link);
+
+      let qr_code_img = document.querySelector(".qr-code img");
+      let qr_code_canvas = document.querySelector("canvas");
+
+      if (qr_code_img.getAttribute("src") == null) {
+        setTimeout(() => {
+          download_link.setAttribute("href", `${qr_code_canvas.toDataURL()}`);
+        }, 300);
+      } else {
+        setTimeout(() => {
+          download_link.setAttribute("href", `${qr_code_img.getAttribute("src")}`);
+        }, 300);
+      }
+    }
+
+    generate({
+      value: "https://murtuzaalisurti.github.io/qr"
+    });
+  </script>
+</body>
+
+</html>
