@@ -65,13 +65,13 @@ const detail = {
   seat:"hgdkjsdfljkljkkn"
 }
 
+const dtl = JSON.stringify(detail);
+
     function generate(user_input) {
       qr_code_element.style = "";
 
       var qrcode = new QRCode(qr_code_element, {
-        text: `{'ticketid':"hgjhjkjhjkhjkbhjknjijkhjk",
-  'email':"jassi@gmail.com",
-  'seat':"hgdkjsdfljkljkkn"}`,
+        text: `${dtl}`,
         width: 300, //128
         height: 300,
         colorDark: "#000000",

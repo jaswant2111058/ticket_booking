@@ -8,13 +8,6 @@ const userschema=new mongoose.Schema({
         type:String,
        unique:[true,"email already exist"]
     },
-    email_status:{
-        type:String
-    },
-    password:{
-        type:String,
-       
-    },
 
     bookedTickets:{
         type:Array,

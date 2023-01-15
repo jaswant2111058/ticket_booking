@@ -13,6 +13,7 @@ app.use(express.urlencoded({ extended: false }));
 const userDetail = require("./model/userDetail")
 const avalabilityDetail = require("./model/avalabilityDetail")
 const adminDetail = require("./model/adminDetail")
+const paymentDetail = require("./model/paymentDetail")
 const static1 = path.join(__dirname, "/views")
 app.use(express.static(static1));
 const cookiejk = require("cookie-parser");
@@ -60,21 +61,22 @@ function sendmail(email) {
 
 
 function sendmail(email, detail) {
-  const random = Math.floor(Math.random() * 99999) + 10000;
 
-  console.log(random);
   var transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: "jkstar0123@gmail.com",
-      pass: process.env.EMAIL_PASS,
+      pass: "mxzqoaojndfjqplx",
     }
   })
+
+  const dtl = JSON.stringify(detail);
+
   var mailOptions = {
     from: 'jkstar0123@gmail.com',
     to: `${email}`,
     subject: 'registor email verification',
-    html: `booking detail IS ${detail}`
+    html: `booking detail IS ${dtl}`
   }
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {
@@ -157,13 +159,12 @@ app.get("/signup", (req, res) => {
 
 app.post('/signup', async (req, res) => {
   const pass = req.body.password;
-  const repass = req.body.repassword;
   //const adnew= schema.findOne(res.body.email)
-  if (pass === repass) {
+
     const detail = { user_email: req.body.email, password: pass, user_name: req.body.username, email_status: "notverified" }
 
     try {
-      const usr = new schema(detail)
+      const usr = new adminDetail(detail)
       const adnew = await usr.save();
       const otp = sendmail(req.body.email);
       otpsend = `${otp}`;
@@ -175,12 +176,7 @@ app.post('/signup', async (req, res) => {
     }
 
 
-  }
-
-  else {
-    res.send("entered password is not matching" + "<html><br><br><a href='/'>return<a></html>")
-  }
-
+  
 
 })
 
@@ -286,128 +282,217 @@ app.post("/fov", async (req, res) => {
 //google passport login
 
 app.get("/googlelogin", isLoggedIn, async (req, res) => {
+  try {
   useremail = req.user.email;
-  const semail = await schema.findOne({ user_email: req.user.email })
+  const semail = await adminDetail.findOne({ org_email: req.user.email })
   if (!semail) {
-    try {
-      const detail = { user_name: req.user.displayName, user_email: req.user.email, email_status: "verified" }
+    
+      const detail = { org_name: req.user.displayName, org_email: req.user.email, email_status: "verified" }
 
-      const usr = new schema(detail);
+      const usr = new adminDetail(detail);
       const adnew = await usr.save();
       // res.status(201).send(adnew);
       res.redirect("/user_logged_in");
-    }
-    catch (error) {
-      res.status(400).send(error);
-    }
+    
+    
   }
   else {
     res.redirect("/user_logged_in");
   }
+}
+  catch (error) {
+    res.status(400).send(error);
+  }
+})
+
+app.post('/create/orderId', isLoggedIn, async (req, res) => {
+  try {
+  let options = {
+    amount: req.body.amount,  // amount in the smallest currency unit
+    currency: "INR",
+    receipt: "order_rcptid_11"
+  };
+  instance.orders.create(options, async function (err, order) {
+    console.log(order);
+    // res.send({orderId:order.id})
+    
+      const adnew = await paymentDetail.findOne({ user_email: req.body.email });
+      if(!adnew)
+      {
+        const data = new paymentDetail({user_email:req.body.email})
+        await data.save();
+      }
+    res.render("payment", { order: order.id, adnew });
+    
+    
+  })
+}
+  catch (e) {
+    console.log("error");
+  };
 })
 
 
+app.post("/api/payment/verify", isLoggedIn, async (req, res) => {
 
-app.get("/user_logged_in", isLoggedIn, (req, res) => {
+  //const adnew = await schema.findOne({leader_email:req.user.email})
+  
+  try{
 
-  if (useremail == 0) {
+    let body = req.body.razorpay_order_id + "|" + req.body.razorpay_payment_id;
 
-    res.redirect("/");
+  var crypto = require("crypto");
+  var expectedSignature = crypto.createHmac('sha256', process.env.KEY_SECRET)
+    .update(body.toString())
+    .digest('hex');
+  console.log("sig received ", req.body.razorpay_signature);
+  console.log("sig generated ", expectedSignature);
+  var response = { "signatureIsValid": "false" }
+
+  if (expectedSignature === req.body.razorpay_signature) {
+    const adnew = await paymentDetail.findOne({ email: req.body.email });
+    adnew.paymentStatus.push("successfull")
+    adnew.paymentId.push(req.body.razorpay_payment_id)
+    adnew.orderId.push(req.body.razorpay_order_id)
+    adnew.signature.push("verified")
+    adnew.counter = adnew.counter + 1;
+    const keep = await paymentDetail.updateOne({ email: req.user.email }, { paymentStatus: adnew.paymentStatus, signature: adnew.sinature, paymentId: req.body.razorpay_payment_id, orderId: req.body.razorpay_order_id, counter: adnew.counter });
+
+
+    res.send(adnew);
+
   }
   else {
-
-    res.render("homepage", { email: useremail });
+    const keep = await paymentDetail.updateOne({ email: req.user.email }, { paymentStatus: "unsuccessfull" });
+    //  console.log(req.body.razorpay_order_id,req.body.razorpay_payment_id,req.body.razorpay_signature);
+    res.send("payment is not veryfied");
   }
-})
-app.get("/scan_product_storing", isLoggedIn, (req, res) => {
-
-  if (useremail == 0) {
-
-    res.redirect("/");
   }
-  else
-    res.render("storing", { email: useremail });
-
-
-})
-app.post("/product_storing", isLoggedIn, async (req, res) => {
-
-  if (useremail == 0) {
-
-    res.redirect("/");
-  }
-
-  console.log("entery");
-  const data2 = await schema.updateOne({ user_email: useremail }, { product_id: req.body.id, product_price: req.body.price, product_quantity: req.body.quantity })
-  //{ product_id:req.body.id,product_price :req.body.price, product_quantity : req.body.quantity}
-
-  console.log(req.body.id);
-  console.log(data);// res.redirect("/scan_product_storing")
-
-})
-
-
-
-
-app.get("/scan_product_selling", isLoggedIn, (req, res) => {
-
-  if (useremail == 0) {
-
-    res.redirect("/");
-  }
-  res.render("selling", { email: useremail });
-
-
-})
-app.post("/scan_product_selling", isLoggedIn, async (req, res) => {
-  if (useremail == 0) {
-
-    res.redirect("/");
-  }
-
-  const product_id = req.body.id;
-  const product_peice = req.body.price;
-  var product_quantity = req.body.quantity;
-  // const db = await schema.findOne({ user_email: useremail});
-  // let i = db.count;
-
-  let data = await schema.findOne({ user_email: useremail });
-  product_quantity = data.product_quantity - req.body.quantity;
-  const data2 = await schema.updateOne({ user_email: useremail }, { product_id: req.product_quantity, product_price: req.body.price, product_quantity: req.body.quantity })
-
-  res.redirect("/store", { onedate: data2 });
-
-
-
-})
-
-app.post("/ticket_genrate", async (req, res) => {
-
-  const TicketId = req.body.email + req.body.seat;
-
-  bcrypt.hash(TicketId, 12, async function (err, hash) {
-
-    const detail = {
-      email: req.body.email, TicketId: hash, seat: req.body.seat,
-    }
-    try {
-      const usr = new userDetail(detail);
-      const adnew = await usr.save();
-      sendmailTicket(req.body.email, detail);
-      res.render("ticketDetail", { ticketDetail: detail })
-    }
-    catch
+  catch
     {
       res.status(400).send("Internal serever error" + "<html><br><br><a href='/'>return<a></html>");
     }
 
 
-    console.log(hash);
-  });
+
+});
+
+app.post("/event/hosting", async (req, res) => {
+
+  
+  try{
+    let eventDetail = {
+      venue: req.body.venuecode,
+      date: req.body.date,
+      time: req.body.time, 
+  
+    }
+  eventDetail = JSON.stringify(eventDetail);
+  let data = await adminDetail.findOne({ email: req.body.email })
+  data = JSON.parse(data.eventDetail)
+  data.push(eventDetail);
+  await adminDetail.updateOne({ email: req.body.email }, { eventDetail: data })
+  let seats = JSON.parse(req.body.seat)
+  const detail={eventId:eventDetail,total_seats:seats,avalable_seats:seats};
+  const genEnventId = new avalabilityDetail(detail);
+  await genEnventId.save();
+  }
+  catch
+    {
+      res.status(400).send("Internal serever error" + "<html><br><br><a href='/'>return<a></html>");
+    }
 })
 
 
 
+
+
+
+
+
+
+app.post("/ticket/genrate", async (req, res) => {
+
+try{
+  
+  bcrypt.hash(req.body.eventId, 12, async function (err, hash) {
+    const TicketId = JSON.parse(req.body.eventId) ;
+    const seat_deatil = JSON.parse(req.body.seat)
+    const bookedTickets = {
+      TicketId: hash, seat: seat_deatil, eventId:TicketId,
+    }
+   
+    const data = JSON.stringify(bookedTickets)
+    let detail= {TicketId:hash,email:req.body.email}
+    detail= JSON.stringify(detail);
+
+  
+      const data1 = await userDetail.findOne({ user_email: req.body.email });
+      if (data1) {
+        data1.bookedTickets.push(data);
+        const adnew = await userDetail.updateOne({ user_email: req.body.email }, { bookedTickets: data1.bookedTickets })
+      }
+      else {
+        const detail = { user_name: req.body.name, user_email: req.body.email, bookedTickets: data }
+        const addnew = new userDetail(detail);
+        await addnew.save();
+      }
+      const event_data = await avalabilityDetail.findOne({ eventId: req.body.eventId });
+
+        function seatRemove(arr, value) {
+          var index = arr.indexOf(value);
+          if (index > -1) {
+            arr.splice(index, 1);
+          }
+          return arr;
+        }
+        const totalSeat = JSON.parse(event_data.total_seats)
+        for (let i = 0; i < seat_deatil.lenght; i++) {
+          seatRemove(totalSeat, seat_deatil[i]);
+        }
+        const seatbooked = JSON.parse(event_data.booked_seats)
+        seatbooked.push(seat_deatil);
+        const event_adnew = await avalabilityDetail.updateOne({ eventId: req.body.eventId }, { booked_seats: seatbooked }, { avalable_seats: totalSeat })
+      
+      
+      const payment = await paymentDetail.findOne({ email: req.body.email });
+      payment.ticketId.push(hash);
+      const keep = await paymentDetail.updateOne({ email: req.user.email }, { ticketId: payment.ticketId });
+      sendmailTicket(req.body.email, detail);
+
+      res.render("ticketDetail", { ticketDetail: detail })
+    
+     console.log(hash);
+  })
+}
+catch
+{
+  res.status(400).send("Internal serever error" + "<html><br><br><a href='/'>return<a></html>");
+}
+  
+})
+
+app.post("/ticket/verification", async (req, res) => {
+
+  
+  try{
+    const ticketid = JSON.parse(req.body.ticketId);
+  const adnew = await userDetail.findOne({ email: ticketid.email });
+  let ticId = JSON.parse(adnew.bookedTickets)
+  ticId=ticId.pop();
+  if (ticketid.TicketId === ticId.TicketId) {
+    res.send("verified"+ticId)
+  }
+  else {
+    res.send("notverified")
+  }
+}
+catch
+    {
+      res.status(400).send("Internal serever error" + "<html><br><br><a href='/'>return<a></html>");
+    }
+
+})
 
 
 app.listen(port, () => console.log("server is up....."));
