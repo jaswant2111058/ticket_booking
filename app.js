@@ -66,7 +66,7 @@ function sendmail(email, detail) {
     service: 'gmail',
     auth: {
       user: "jkstar0123@gmail.com",
-      pass: "mxzqoaojndfjqplx",
+      pass: process.env.EMAIL_PASS ,
     }
   })
 
