@@ -1,31 +1,34 @@
 {
-  "name": "jack",
+  "name": "ticket_backend",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "test": "jest --watchAll",
+    "dev": "nodemon app.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.1.0",
+    "axios": "^1.2.0",
     "bcryptjs": "^2.4.3",
-    "body-parser": "^1.20.1",
-    "cookie-parser": "^1.4.6",
-    "dotenv": "^16.0.3",
-    "ejs": "^3.1.8",
-    "express": "^4.18.2",
-    "express-jwt": "^8.2.0",
-    "express-session": "^1.17.3",
-    "html5-qrcode": "^2.3.4",
-    "jsonwebtoken": "^9.0.0",
-    "mongoose": "^6.8.0",
-    "nodemailer": "^6.8.0",
-    "passport": "^0.6.0",
-    "passport-google-oauth2": "^0.2.0",
-    "razorpay": "^2.8.4",
-    "validator": "^13.7.0"
-  }
+    "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "debug": "~2.6.9",
+    "dotenv": "^16.3.1",
+    "express": "~4.16.1",
+    "express-validator": "^6.14.2",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.7.2",
+    "morgan": "~1.9.1",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.3",
+    "razorpay": "^2.8.6",
+    "socket.io": "^4.5.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "author": "",
+  "license": "ISC"
 }
