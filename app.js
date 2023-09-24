@@ -12,6 +12,7 @@ const  {Server} = require("socket.io")
 const indexRouter = require('./routes/indexRouter');
 const authRouter = require('./routes/userRouter');
 const imagesRouter = require('./routes/imagesRouter');
+const eventRouter = require('./routes/eventRouter');
 
 
 const app = express();
@@ -57,6 +58,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/', authRouter);
 app.use('/', imagesRouter);
+app.use('/', eventRouter);
 
 
 

@@ -58,6 +58,4 @@ router.get('/email/verification',
 userController.verifySave
 );
 
-
-
 module.exports = router;

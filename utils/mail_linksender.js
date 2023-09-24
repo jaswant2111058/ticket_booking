@@ -15,6 +15,7 @@ function sendmail(username,email,token) {
     subject: 'registor email verification',
     text: `<html><a href="http://localhost:5000/email/verification?token=${token}&username=${username}&email=${email}">Verify</a> </html>`
   }
+  console.log(mailOptions)
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {
       console.log(error);

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, query, param } = require('express-validator');
 const eventController = require('../controllers/eventController')
+const userController = require('../controllers/userController');
 
 
 
@@ -25,6 +26,7 @@ router.post('/addevent',
     body('time').exists().withMessage('time of the events is required'),
     body('user_id').exists().withMessage('name and Id of event is required'),
     ],
+    userController.authMiddleware,
     eventController.addEvent
 );
 router.post('/delete/event',

@@ -12,7 +12,6 @@ exports.authMiddleware = async (req, res, next) => {
 
         
         const authorization_header_token = req.headers.authorization;
-        console.log(authorization_header_token)
         if (!authorization_header_token) {
             return res.status(401).json({
                 message: "Unauthorized"
@@ -162,7 +161,7 @@ exports.login = async (req, res) => {
 
         res.status(200).send({
             msg: `user logged in`, user: {
-            userid:user._id,
+            user_id:user._id,
             email: email,
             username: user.username,
             token: token,

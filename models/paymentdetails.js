@@ -19,6 +19,7 @@ const Schema = new mongoose.Schema({
     },
     payment_id:{
        type: String,
+    
     },
     verification: {
         type: Boolean,
